@@ -57,7 +57,7 @@ jobs:
 
   front-deploy:
     needs: [back-deploy, front-build]
-    if: needs.front-build.result == 'success' && (needs.back-deploy == 'success' || needs.back-deploy.result == 'skipped')
+    if: needs.front-build.result == 'success' && (needs.back-deploy.result == 'success' || needs.back-deploy.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - run: |
