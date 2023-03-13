@@ -46,3 +46,17 @@ jobs:
   build-back:
     needs: [check-back]
     uses: ./.github/workflows/back-build.yml
+
+  deploy-back:
+    needs: [build-back, build-front]
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "DEPLOY!"
+
+  deploy-front:
+    needs: [deploy-back, build-front]
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "DEPLOY!"
