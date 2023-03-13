@@ -34,7 +34,15 @@ jobs:
     if: needs.check-for-changes.outputs.frontChanged == 'true'
     uses: ./.github/workflows/front-verify.yml
 
+  build-front:
+    needs: [check-front]
+    uses: ./.github/workflows/front-build.yml
+
   check-back:
     needs: [check-for-changes]
     if: needs.check-for-changes.outputs.backChanged == 'true'
     uses: ./.github/workflows/back-verify.yml
+
+  build-back:
+    needs: [check-back]
+    uses: ./.github/workflows/back-build.yml

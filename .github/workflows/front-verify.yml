@@ -1,4 +1,4 @@
-name: Verify frontend
+name: Build frontend
 
 on:
   workflow_call:
