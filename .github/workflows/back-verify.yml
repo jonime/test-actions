@@ -1,0 +1,10 @@
+name: Verify frontend
+
+on:
+  workflow_call:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Ok!"

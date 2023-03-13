@@ -1,0 +1,40 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  check-for-changes:
+    name: Check for changes
+    runs-on: ubuntu-latest
+    outputs:
+      frontChanged: ${{ steps.front-changes.outputs.any_changed == 'true' }}
+      backChanged: ${{ steps.back-changes.outputs.any_changed == 'true' }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Check for changes in frontend
+        id: front-changes
+        uses: tj-actions/changed-files@v35
+        with:
+          files: packages/front/**
+
+      - name: Check for changes in backend
+        id: back-changes
+        uses: tj-actions/changed-files@v35
+        with:
+          files: packages/back/**
+
+  check-front:
+    needs: [check-for-changes]
+    if: steps.check-for-changes.outputs.frontChanged
+    uses: ./.github/workflows/front-verify.yml
+
+  check-back:
+    needs: [check-for-changes]
+    if: steps.check-for-changes.outputs.backChanged
+    uses: ./.github/workflows/back-verify.yml
