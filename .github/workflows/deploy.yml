@@ -35,8 +35,8 @@ jobs:
     steps:
       - name: Output stuff
         run: |
-          echo "Frontend changed: ${{ needs.check-for-changes-outputs.frontChanged }}"
-          echo "Backend changed: ${{ needs.check-for-changes-outputs.backChanged }}"
+          echo "Frontend changed: ${{ needs.check-for-changes.outputs.frontChanged }}"
+          echo "Backend changed: ${{ needs.check-for-changes.outputs.backChanged }}"
 
   check-front:
     needs: [check-for-changes]
