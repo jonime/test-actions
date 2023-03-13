@@ -51,6 +51,7 @@ jobs:
     needs: [build-back, build-front]
     if: |
       always() &&
+      contains(needs.*.result, 'success') &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
     runs-on: ubuntu-latest
@@ -62,6 +63,7 @@ jobs:
     needs: [deploy-back, build-front]
     if: |
       always() &&
+      contains(needs.*.result, 'success') &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
     runs-on: ubuntu-latest
