@@ -29,6 +29,13 @@ jobs:
         with:
           files: packages/back/**
 
+  testi:
+    needs: [check-for-changes]
+    steps:
+      - run: |
+        echo "Frontend changed: ${{ needs.check-for-changes-outputs.frontChanged }}"
+        echo "Backend changed: ${{ needs.check-for-changes-outputs.backChanged }}"
+
   check-front:
     needs: [check-for-changes]
     if: needs.check-for-changes.outputs.frontChanged
