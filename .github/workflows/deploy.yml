@@ -29,11 +29,12 @@ jobs:
         with:
           files: packages/back/**
 
-      - run: |
-        echo "Front raw: ${{ steps.front-changes.outputs.any_changed }}"
-        echo "Front value: ${{ steps.front-changes.outputs.any_changed == 'true' }}"
-        echo "Back raw: ${{ steps.front-changes.outputs.any_changed }}"
-        echo "Back value: ${{ steps.back-changes.outputs.any_changed == 'true' }}"
+      - name: Debug
+        run: |
+          echo "Front raw: ${{ steps.front-changes.outputs.any_changed }}"
+          echo "Front value: ${{ steps.front-changes.outputs.any_changed == 'true' }}"
+          echo "Back raw: ${{ steps.front-changes.outputs.any_changed }}"
+          echo "Back value: ${{ steps.back-changes.outputs.any_changed == 'true' }}"
 
   testi:
     needs: [check-for-changes]
