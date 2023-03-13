@@ -50,7 +50,6 @@ jobs:
   deploy-back:
     needs: [build-back, build-front]
     if: |
-      always() &&
       contains(needs.*.result, 'success') &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
@@ -62,7 +61,6 @@ jobs:
   deploy-front:
     needs: [deploy-back, build-front]
     if: |
-      always() &&
       contains(needs.*.result, 'success') &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
