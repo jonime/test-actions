@@ -49,10 +49,7 @@ jobs:
 
   back-deploy:
     needs: [back-build, front-build]
-    if: |
-      contains(needs.*.result, 'success') &&
-      !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled')
+    if: needs.back-build.result == 'success' && (needs.front-build.result == 'success' || needs.front-build.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - run: |
@@ -60,10 +57,7 @@ jobs:
 
   front-deploy:
     needs: [back-deploy, front-build]
-    if: |
-      contains(needs.*.result, 'success') &&
-      !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled')
+    if: needs.front-build.result == 'success' && (needs.back-deploy == 'success' || needs.back-deploy.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - run: |
