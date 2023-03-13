@@ -49,6 +49,10 @@ jobs:
 
   deploy-back:
     needs: [build-back, build-front]
+    if: |
+      always() &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
     runs-on: ubuntu-latest
     steps:
       - run: |
@@ -56,6 +60,10 @@ jobs:
 
   deploy-front:
     needs: [deploy-back, build-front]
+    if: |
+      always() &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
     runs-on: ubuntu-latest
     steps:
       - run: |
