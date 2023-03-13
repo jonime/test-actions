@@ -31,8 +31,10 @@ jobs:
 
   testi:
     needs: [check-for-changes]
+    runs-on: ubuntu-latest
     steps:
-      - run: |
+      - name: Output stuff
+        run: |
         echo "Frontend changed: ${{ needs.check-for-changes-outputs.frontChanged }}"
         echo "Backend changed: ${{ needs.check-for-changes-outputs.backChanged }}"
 
