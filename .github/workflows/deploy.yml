@@ -10,8 +10,8 @@ jobs:
     name: Check for changes
     runs-on: ubuntu-latest
     outputs:
-      frontChanged: ${{ steps.front-changes.outputs.any_changed == 'true' }}
-      backChanged: ${{ steps.back-changes.outputs.any_changed == 'true' }}
+      frontChanged: ${{ steps.front-changes.outputs.any_changed }}
+      backChanged: ${{ steps.back-changes.outputs.any_changed }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -29,28 +29,12 @@ jobs:
         with:
           files: packages/back/**
 
-      - name: Debug
-        run: |
-          echo "Front raw: ${{ steps.front-changes.outputs.any_changed }}"
-          echo "Front value: ${{ steps.front-changes.outputs.any_changed == 'true' }}"
-          echo "Back raw: ${{ steps.front-changes.outputs.any_changed }}"
-          echo "Back value: ${{ steps.back-changes.outputs.any_changed == 'true' }}"
-
-  testi:
-    needs: [check-for-changes]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Output stuff
-        run: |
-          echo "Frontend changed: ${{ needs.check-for-changes.outputs.frontChanged }}"
-          echo "Backend changed: ${{ needs.check-for-changes.outputs.backChanged }}"
-
   check-front:
     needs: [check-for-changes]
-    if: needs.check-for-changes.outputs.frontChanged
+    if: needs.check-for-changes.outputs.frontChanged == 'true'
     uses: ./.github/workflows/front-verify.yml
 
   check-back:
     needs: [check-for-changes]
-    if: needs.check-for-changes.outputs.backChanged
+    if: needs.check-for-changes.outputs.backChanged == 'true'
     uses: ./.github/workflows/back-verify.yml
