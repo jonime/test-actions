@@ -31,10 +31,10 @@ jobs:
 
   check-front:
     needs: [check-for-changes]
-    if: steps.check-for-changes.outputs.frontChanged
+    if: needs.check-for-changes.outputs.frontChanged
     uses: ./.github/workflows/front-verify.yml
 
   check-back:
     needs: [check-for-changes]
-    if: steps.check-for-changes.outputs.backChanged
+    if: needs.check-for-changes.outputs.backChanged
     uses: ./.github/workflows/back-verify.yml
