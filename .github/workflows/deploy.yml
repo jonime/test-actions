@@ -62,15 +62,3 @@ jobs:
     steps:
       - run: |
           echo "DEPLOY!"
-
-  debug:
-    needs: [front-build, back-build, back-deploy]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          echo "front-build: ${{ needs.front-build.result }}"
-          echo "back-build: ${{ needs.back-build.result }}"
-          echo "back-deploy: ${{ needs.back-deploy.result }}"
-          echo "front-deploy rule: ${{ needs.front-build.result == 'success' && (needs.back-deploy.result == 'success' || needs.back-deploy.result == 'skipped') }}"
-          echo "back-deploy rule: ${{ needs.back-build.result == 'success' && (needs.front-build.result == 'success' || needs.front-build.result == 'skipped') }}"
