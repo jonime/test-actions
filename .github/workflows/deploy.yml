@@ -29,26 +29,26 @@ jobs:
         with:
           files: packages/back/**
 
-  check-front:
+  front-check:
     needs: [check-for-changes]
     if: needs.check-for-changes.outputs.frontChanged == 'true'
     uses: ./.github/workflows/front-verify.yml
 
-  build-front:
-    needs: [check-front]
+  front-build:
+    needs: [front-check]
     uses: ./.github/workflows/front-build.yml
 
-  check-back:
+  back-check:
     needs: [check-for-changes]
     if: needs.check-for-changes.outputs.backChanged == 'true'
     uses: ./.github/workflows/back-verify.yml
 
-  build-back:
-    needs: [check-back]
+  back-build:
+    needs: [back-check]
     uses: ./.github/workflows/back-build.yml
 
-  deploy-back:
-    needs: [build-back, build-front]
+  back-deploy:
+    needs: [back-build, front-build]
     if: |
       contains(needs.*.result, 'success') &&
       !contains(needs.*.result, 'failure') &&
@@ -58,8 +58,8 @@ jobs:
       - run: |
           echo "DEPLOY!"
 
-  deploy-front:
-    needs: [deploy-back, build-front]
+  front-deploy:
+    needs: [back-deploy, front-build]
     if: |
       contains(needs.*.result, 'success') &&
       !contains(needs.*.result, 'failure') &&
