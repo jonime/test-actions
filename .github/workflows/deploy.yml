@@ -18,9 +18,9 @@ jobs:
         id: changes
         uses: tj-actions/changed-files@v35
         with:
-          path: ./packages
+          files: packages/*
           dir_names: true
-          dir_names_max_depth: 1
+          dir_names_max_depth: 2
 
       - name: Debug
         run: |
