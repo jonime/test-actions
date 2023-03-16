@@ -25,6 +25,6 @@ jobs:
 
       - name: Debug
         run: |
-          echo "${{ steps.changes.outputs.all_changed_files }}";
-          echo "back changed: ${{ contains(steps.changes.outputs.all_changed_files, 'packages/back') }}"
-          echo "front changed: ${{ contains(steps.changes.outputs.all_changed_files, 'packages/front') }}"
+          echo "${{ steps.changes.outputs.all_changed_files }}" >> $GITHUB_STEP_SUMMARY
+          echo "back changed: ${{ contains(steps.changes.outputs.all_changed_files, 'packages/back') }}" >> $GITHUB_STEP_SUMMARY
+          echo "front changed: ${{ contains(steps.changes.outputs.all_changed_files, 'packages/front') }}" >> $GITHUB_STEP_SUMMARY
