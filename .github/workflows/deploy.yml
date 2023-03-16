@@ -15,6 +15,7 @@ jobs:
           fetch-depth: 2
 
       - name: Check for changes
+        if: failure()
         id: changes
         uses: tj-actions/changed-files@v35
         continue-on-error: true
