@@ -25,5 +25,5 @@ jobs:
       - name: Debug
         run: |
           echo "${{ steps.changes.outputs.all_changed_files }}";
-          echo "back changed: ${{ contains('packages/back', steps.changes.outputs.all_changed_files) }}"
-          echo "front changed: ${{ contains('packages/front', steps.changes.outputs.all_changed_files) }}"
+          echo "back changed: ${{ contains(steps.changes.outputs.all_changed_files, 'packages/back') }}"
+          echo "front changed: ${{ contains(steps.changes.outputs.all_changed_files, 'packages/front') }}"
