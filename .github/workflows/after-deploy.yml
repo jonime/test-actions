@@ -12,4 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Do it
-        run: echo "${{ toJSON(github) }}"
+        run: |
+          echo "```${{ toJSON(github) }}```" >> $GITHUB_STEP_SUMMARY
+          echo "```${{ github.event.workflow_run }}```" >> $GITHUB_STEP_SUMMARY

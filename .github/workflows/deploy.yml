@@ -11,4 +11,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Do it
-        run: echo "OK!"
+        run: exit 1
