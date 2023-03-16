@@ -14,9 +14,8 @@ jobs:
       - name: Do it
         run: |
           cat <<EOF >> $GITHUB_STEP_SUMMARY
-          \`\`\`${{ toJSON(github) }}\`\`\`
-          EOF
-
-          cat <<EOF >> $GITHUB_STEP_SUMMARY
-          \`\`\`${{ toJSON( github.event.workflow_run) }}\`\`\`
+          # github
+          \`\`\`
+          ${{ toJSON(github) }}
+          \`\`\`
           EOF
