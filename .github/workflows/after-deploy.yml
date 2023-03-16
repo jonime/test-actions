@@ -13,10 +13,10 @@ jobs:
     steps:
       - name: Do it
         run: |
-          cat << EOF >> $GITHUB_STEP_SUMMARY
+          cat <<EOF >> $GITHUB_STEP_SUMMARY
           ```${{ toJSON(github) }}```
           EOF
 
-          cat << EOF >> $GITHUB_STEP_SUMMARY
+          cat <<EOF >> $GITHUB_STEP_SUMMARY
           ```${{ toJSON( github.event.workflow_run) }}```
           EOF
