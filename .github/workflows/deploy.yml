@@ -26,7 +26,7 @@ jobs:
 
       - name: Debug
         run: |
-          # echo "errr: ${{ toJSON(steps.changes) }}" >> $GITHUB_STEP_SUMMARY
+          echo "errr: ${{ toJSON(steps.changes) }}" >> $GITHUB_STEP_SUMMARY
           echo "all_changed_files: ${{ steps.changes.outputs.all_changed_files }}" >> $GITHUB_STEP_SUMMARY
           echo "back changed: ${{ steps.changes.outcome == 'failure' || contains(steps.changes.outputs.all_changed_files, 'packages/back') }}" >> $GITHUB_STEP_SUMMARY
           echo "front changed: ${{ steps.changes.outcome == 'failure' || contains(steps.changes.outputs.all_changed_files, 'packages/front') }}" >> $GITHUB_STEP_SUMMARY
