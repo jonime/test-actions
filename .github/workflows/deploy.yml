@@ -20,5 +20,6 @@ jobs:
         with:
           files: packages/back/**
 
-      - run: |
-          echo "${{ steps.changes.outputs }}"
+      - name: Debug
+        run: |
+          echo "${{ steps.changes.outputs.all_changed_files }}";
