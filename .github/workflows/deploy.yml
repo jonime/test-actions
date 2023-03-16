@@ -22,7 +22,6 @@ jobs:
           files: packages/*
           dir_names: true
           dir_names_max_depth: 2
-          base_sha: koira
 
       - name: Debug
         run: |
