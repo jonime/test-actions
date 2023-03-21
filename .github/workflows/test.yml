@@ -10,5 +10,5 @@ jobs:
     steps:
       - name: Do it
         run: |
-          echo "ref: ${{ github.ref }}"
-          echo "ref_name: ${{ github.ref_name }}"
+          echo "ref: ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "ref_name: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
