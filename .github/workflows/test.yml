@@ -1,0 +1,25 @@
+name: Test
+
+on:
+  push:
+
+jobs:
+  call-other:
+    name: Call other workflow
+    uses: ./.github/workflows/other-workflow.yml
+    secrets: inherit
+
+  test:
+    needs: [call-other]
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Do it
+        uses: actions/github-script@v6
+        with:
+          script: |
+            if ("${{ needs.call-other.outputs.key }}" === '${{ secrets.SALAINEN }}') {
+              core.info("Success!");
+            } else {
+              core.setFailed('Fail :|');
+            }
