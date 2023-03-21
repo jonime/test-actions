@@ -9,7 +9,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Do it
-        uses: actions/github-script@v6
-        with:
-          script: |
-            console.log(${{ fromJSON(github) }});
+        run: |
+          echo "${{ fromJSON(github) }}"
