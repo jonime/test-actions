@@ -6,6 +6,6 @@
   },
   "version": "0.0.3",
   "scripts": {
-    "postversion": "git push --all"
+    "postversion": "git push --tags && git push"
   }
 }
