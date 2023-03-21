@@ -18,8 +18,4 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            if ("${{ needs.call-other.outputs.key }}" === '${{ secrets.SALAINEN }}') {
-              core.info("Success!");
-            } else {
-              core.setFailed('Fail :|');
-            }
+            core.info("Outputti on: ${{ needs.call-other.outputs.key }}");

@@ -4,7 +4,7 @@ on:
   workflow_call:
     outputs:
       key:
-        value: ${{ jobs.something.outputs.key }}
+        value: ${{ jobs.something.outputs.key  }}
 
 jobs:
   something:
@@ -18,5 +18,4 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            core.setSecret('${{ secrets.SALAINEN }}')
-            core.setOutput('out', '${{ secrets.SALAINEN }}');
+            core.setOutput('out', 'TERE');
