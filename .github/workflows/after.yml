@@ -18,5 +18,11 @@ jobs:
     steps:
       - name: Test
         run: |
-          echo "branch: ${{ env.branch }}"
-          echo "sha: ${{env.sha }}"
+          echo "branch: ${{ env.branch }}" >> $GITHUB_STEP_SUMMARY
+          echo "sha: ${{env.sha }}" >> $GITHUB_STEP_SUMMARY
+
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          \`\`\`
+          ${{ toJSON(github) }}
+          \`\`\`
+          EOF
