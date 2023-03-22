@@ -8,7 +8,7 @@ on:
       - completed
 
 env:
-  sha: ${{ github.sha }}
+  sha: ${{ github.event.workflow_run.head_sha }}
   branch: ${{ github.event.workflow_run.head_branch }}
 
 jobs:
