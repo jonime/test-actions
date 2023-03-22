@@ -1,0 +1,15 @@
+name: After test
+
+on:
+  workflow_run:
+    workflows:
+      - Test
+    types:
+      - completed
+
+jobs:
+  something:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test
+        run: echo "hehe"
