@@ -7,14 +7,16 @@ on:
     types:
       - completed
 
+env:
+  sha: ${{ github.sha }}
+  branch: ${{ github.event.workflow_run.head_branch }}
+
 jobs:
   something:
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Test
         run: |
-          cat >> $GITHUB_STEP_SUMMARY << EOF
-          \`\`\`
-          ${{ toJSON(github) }}
-          \`\`\`
-          EOF
+          echo "branch: ${{ env.branch }}"
+          echo "sha: ${{env.sha }}"
