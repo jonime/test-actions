@@ -12,4 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Test
-        run: echo '```${{ toJSON( github )}}```" >> $GITHUB_STEP_SUMMARY
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ```
+          ${{ toJSON(github) }}
+          ```
+          EOF
