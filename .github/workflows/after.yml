@@ -14,7 +14,7 @@ jobs:
       - name: Test
         run: |
           cat >> $GITHUB_STEP_SUMMARY << EOF
-          ```
+          \`\`\`
           ${{ toJSON(github) }}
-          ```
+          \`\`\`
           EOF
