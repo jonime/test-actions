@@ -6,12 +6,6 @@ on:
       targetEnv:
         required: true
         type: string
-      accessKeyIdSecretKey:
-        required: true
-        type: string
-      secretAccessKeySecretKey:
-        required: true
-        type: string
     outputs:
       image:
         value: ${{ jobs.build.outputs.image }}
@@ -21,76 +15,23 @@ jobs:
     name: Build backend
     runs-on: ubuntu-latest
     outputs:
-      image: ${{ steps.docker-full-ref.outputs.docker-full-ref }}
+      image: ${{ steps.image.outputs.image }}
 
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Configure AWS credentials to environment
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets[inputs.accessKeyIdSecretKey] }}
-          aws-secret-access-key: ${{ secrets[inputs.secretAccessKeySecretKey] }}
-          aws-region: eu-west-1
-          mask-aws-account-id: false
-
-      - id: ecr-registry-url
-        name: Get ECR registry URL from AWS SSM
+      - id: image
+        name: Image
         run: |
-          echo "ecr-registry-url=$(aws ssm get-parameters --names '/vrfi/common/infra/fargate/backend/repository_url' --query 'Parameters[0].Value' --output text | cut -d '/' -f 1)" >> $GITHUB_OUTPUT
+          echo "image=${{ github.ref }}" >> $GITHUB_OUTPUT
 
-      - id: package-version
-        name: Package version from package.json
-        shell: bash
+      - name: Build
         run: |
-          echo "package-version=$(jq -j .version packages/back/package.json)" >> $GITHUB_OUTPUT
-
-      - id: docker-tag
-        name: Docker tag
-        shell: bash
-        run: |
-          echo "docker-tag=${{ format('{0}-v{1}-{2}', inputs.targetEnv, steps.package-version.outputs.package-version, github.sha) }}" >> $GITHUB_OUTPUT
-
-      - id: docker-full-ref
-        name: Docker full image reference
-        shell: bash
-        run: |
-          echo "docker-full-ref=${{ format('{0}/vrfi/backend:{1}', steps.ecr-registry-url.outputs.ecr-registry-url, steps.docker-tag.outputs.docker-tag) }}" >> $GITHUB_OUTPUT
-
-      - id: node-version
-        name: NodeJS version
-        shell: bash
-        run: echo "node-version=$(cat .nvmrc | tr -d '[:space:]')" >> $GITHUB_OUTPUT
-
-      - uses: docker/setup-buildx-action@v2
-
-      - name: Login to ECR
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ steps.ecr-registry-url.outputs.ecr-registry-url }}
-          username: ${{ secrets[inputs.accessKeyIdSecretKey] }}
-          password: ${{ secrets[inputs.secretAccessKeySecretKey] }}
-
-      - name: Build Docker image and push to AWS ECR
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: ./Dockerfile.backend
-          build-args: |
-            NODE_VERSION=${{ steps.node-version.outputs.node-version }}
-            ARTIFACTORY_EMAIL=${{ secrets.ARTIFACTORY_EMAIL }}
-            ARTIFACTORY_USERNAME=${{ secrets.ARTIFACTORY_USERNAME }}
-            ARTIFACTORY_PASSWORD=${{ secrets.ARTIFACTORY_PASSWORD }}
-          # Note: "tag" here contains registry URL, repository/directory prefix, and the actual tag.
-          # This is by design in docker/build-push-action@v2 action.
-          tags: ${{ steps.docker-full-ref.outputs.docker-full-ref }}
-          push: true
+          echo "Build ${{ steps.image.outputs.image }} with ${{ inputs.targetEnv }}"
 
       - name: Add summary
         uses: actions/github-script@v6
         with:
           script: |
             await core.summary
-              .addHeading('Backend image uploaded to ECR registry')
-              .addCodeBlock('${{ steps.docker-tag.outputs.docker-tag }}')
+              .addHeading('Image')
+              .addCodeBlock('${{ steps.image.outputs.image }}')
               .write();

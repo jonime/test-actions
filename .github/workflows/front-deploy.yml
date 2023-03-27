@@ -6,50 +6,12 @@ on:
       targetEnv:
         required: true
         type: string
-      accessKeyIdSecretKey:
-        required: true
-        type: string
-      secretAccessKeySecretKey:
-        required: true
-        type: string
 
 jobs:
   deploy:
     name: Deploy frontend
-    env:
-      ARTIFACT_FILENAME: front-build.tar.gz
-      AWS_S3_BUCKET_NAME: 'vr-site-${{ inputs.targetEnv }}-v2-vrfi-vr-fi'
     runs-on: ubuntu-latest
     steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: front-build
-
-      - name: Extract build artifacts
-        shell: bash
+      - name: Deploy
         run: |
-          echo "::group::Extract build artifacts with tar"
-          tar -xzvf ${{ env.ARTIFACT_FILENAME }}
-          echo "::endgroup::"
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1-node16
-        with:
-          aws-access-key-id: ${{ secrets[inputs.accessKeyIdSecretKey] }}
-          aws-secret-access-key: ${{ secrets[inputs.secretAccessKeySecretKey] }}
-          aws-region: eu-west-1
-          mask-aws-account-id: false
-
-      - name: Deploy to S3 - copy next data
-        if: success()
-        shell: bash
-        # Upload next data to a different prefix, so sync command won't slow down.
-        # Sync command fetches information about every file so deploy times would always increase.
-        run: aws s3 cp --recursive ./packages/front/out/_next s3://${AWS_S3_BUCKET_NAME}/data/_next
-
-      - name: Deploy to S3 - sync files
-        if: success()
-        shell: bash
-        # Pages are deployed to a different prefix, so we can use sync to delete removed html files.
-        run: aws s3 sync ./packages/front/out s3://${AWS_S3_BUCKET_NAME}/pages/ --delete  --exclude "_next/*"
+          echo "Deploy ${{ inputs.targetEnv }}!"

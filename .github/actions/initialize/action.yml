@@ -1,19 +1,6 @@
 name: "Initialize"
 description: "Install npm dependencies"
 
-inputs:
-  artifactoryEmail:
-    required: true
-  artifactoryUsername:
-    required: true
-  artifactoryPassword:
-    required: true
-
-outputs:
-  node-version:
-    description: "Installed node.js version"
-    value: ${{ steps.node-version.outputs.node-version }}
-
 runs:
   using: "composite"
   steps:

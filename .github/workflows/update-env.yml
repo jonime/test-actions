@@ -22,5 +22,3 @@ jobs:
     secrets: inherit
     with:
       env: ${{ needs.check-target-env.outputs.env }}
-      accessKeyIdSecretKey: VRFI_TEST_AWS_ACCESS_KEY_ID
-      secretAccessKeySecretKey: VRFI_TEST_AWS_SECRET_ACCESS_KEY

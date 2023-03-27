@@ -19,8 +19,6 @@ jobs:
     with:
       ref: refs/tags/${{ inputs.tag }}
       targetEnv: prod
-      accessKeyIdSecretKey: VRFI_PROD_AWS_ACCESS_KEY_ID
-      secretAccessKeySecretKey: VRFI_PROD_AWS_SECRET_ACCESS_KEY
 
   front-deploy:
     name: Deploy frontend - prod
@@ -29,8 +27,6 @@ jobs:
     secrets: inherit
     with:
       targetEnv: prod
-      accessKeyIdSecretKey: VRFI_PROD_AWS_ACCESS_KEY_ID
-      secretAccessKeySecretKey: VRFI_PROD_AWS_SECRET_ACCESS_KEY
 
   update-env-pointer:
     name: Update env pointer

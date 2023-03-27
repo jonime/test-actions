@@ -18,8 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       deployAll: ${{ steps.validate.outputs.deployAll }}
-      accessKeyIdSecretKey: ${{ steps.validate.outputs.accessKeyIdSecretKey }}
-      secretAccessKeySecretKey: ${{ steps.validate.outputs.secretAccessKeySecretKey }}
     steps:
       - name: Validate "${{ env.env }}"
         id: validate
@@ -28,15 +26,11 @@ jobs:
           script: |
             if (['prod', 'staging'].includes('${{ env.env }}')) {
               core.setOutput('deployAll', 'false');
-              core.setOutput('accessKeyIdSecretKey', 'VRFI_PROD_AWS_ACCESS_KEY_ID');
-              core.setOutput('secretAccessKeySecretKey', 'VRFI_PROD_AWS_SECRET_ACCESS_KEY');
               return;
             }
 
             if (['test', 'dev', 'preview'].includes('${{ env.env }}')) {
               core.setOutput('deployAll', 'true');
-              core.setOutput('accessKeyIdSecretKey', 'VRFI_TEST_AWS_ACCESS_KEY_ID');
-              core.setOutput('secretAccessKeySecretKey', 'VRFI_TEST_AWS_SECRET_ACCESS_KEY');
               return;
             }
 
@@ -50,8 +44,6 @@ jobs:
     secrets: inherit
     with:
       env: ${{ github.event.client_payload.env || 'test' }}
-      accessKeyIdSecretKey: ${{ needs.validate-env.outputs.accessKeyIdSecretKey }}
-      secretAccessKeySecretKey: ${{ needs.validate-env.outputs.accessKeyIdSecretKey }}
 
   front-build:
     name: Build frontend
@@ -62,8 +54,6 @@ jobs:
     with:
       ref: environment-${{ github.event.client_payload.env || 'test' }}
       targetEnv: ${{ github.event.client_payload.env || 'test' }}
-      accessKeyIdSecretKey: ${{ needs.validate-env.outputs.accessKeyIdSecretKey }}
-      secretAccessKeySecretKey: ${{ needs.validate-env.outputs.secretAccessKeySecretKey }}
 
   front-deploy:
     name: Deploy frontend
@@ -73,5 +63,3 @@ jobs:
     secrets: inherit
     with:
       targetEnv: ${{ github.event.client_payload.env || 'test' }}
-      accessKeyIdSecretKey: ${{ needs.validate-env.outputs.accessKeyIdSecretKey }}
-      secretAccessKeySecretKey: ${{ needs.validate-env.outputs.secretAccessKeySecretKey }}
