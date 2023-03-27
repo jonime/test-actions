@@ -7,7 +7,7 @@ on:
     types: [content-build]
 
 concurrency:
-  group: deploy-${{ github.event.client_payload.env || 'test' }}
+  group: content-deploy-${{ github.event.client_payload.env || 'test' }}
 
 env:
   env: ${{ github.event.client_payload.env || 'test' }}
