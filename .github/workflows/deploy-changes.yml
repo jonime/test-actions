@@ -23,8 +23,6 @@ jobs:
       branch: environment-${{ inputs.env }}
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Find SHA for ${{ env.branch }}
         uses: actions/github-script@v6
@@ -43,6 +41,24 @@ jobs:
             } catch (e) {
               core.setFailed('Could not find a SHA for ${{ env.branch }}');
             }
+
+      - uses: dorny/paths-filter@v2
+        id: other-changes
+        with:
+          base: ${{ steps.last-sha.outputs.sha }}
+          filters: |
+            front:
+              - 'packages/front/**'
+            back:
+              - 'packages/back/**'
+
+      - name: Debug
+        run: |
+          cat > $GITHUB_STEP_SUMMARY << EOF
+          \`\`\`
+          ${{ toJSON(steps.other-changes.outputs) }}
+          \`\`\`
+          EOF
 
       - name: Check for changes
         if: success()
