@@ -10,7 +10,6 @@ on:
       forceFrontendBuild:
         type: boolean
         required: false
-        default: false
 
 concurrency:
   group: deploy-${{ inputs.env }}

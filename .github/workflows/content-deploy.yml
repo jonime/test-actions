@@ -44,7 +44,7 @@ jobs:
     secrets: inherit
     with:
       env: ${{ github.event.client_payload.env || 'test' }}
-      forceFrontendBuild: "true"
+      forceFrontendBuild: true
 
   check-deploys:
     name: Check for running deploys
