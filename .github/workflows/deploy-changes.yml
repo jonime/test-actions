@@ -17,8 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     outputs:
-      frontChanged: ${{ steps.changes.outcome != 'success' || contains(steps.changes.outputs.all_changed_files, 'packages/front') }}
-      backChanged: ${{ steps.changes.outcome != 'success' || contains(steps.changes.outputs.all_changed_files, 'packages/back') }}
+      frontChanged: ${{ steps.changes.outcome != 'success' || steps.changes.outputs.front == 'true' }}
+      backChanged: ${{ steps.changes.outcome != 'success' || steps.changes.outputs.back == 'true' }}
     env:
       branch: environment-${{ inputs.env }}
     steps:
@@ -42,8 +42,10 @@ jobs:
               core.setFailed('Could not find a SHA for ${{ env.branch }}');
             }
 
-      - uses: dorny/paths-filter@v2
-        id: other-changes
+      - name: Check for changes
+        if: success()
+        id: changes
+        uses: dorny/paths-filter@v2
         with:
           base: ${{ steps.last-sha.outputs.sha }}
           filters: |
@@ -51,24 +53,6 @@ jobs:
               - 'packages/front/**'
             back:
               - 'packages/back/**'
-
-      - name: Debug
-        run: |
-          cat > $GITHUB_STEP_SUMMARY << EOF
-          \`\`\`
-          ${{ toJSON(steps.other-changes.outputs) }}
-          \`\`\`
-          EOF
-
-      - name: Check for changes
-        if: success()
-        id: changes
-        uses: tj-actions/changed-files@v35
-        with:
-          files: packages/*
-          dir_names: true
-          dir_names_max_depth: 2
-          base_sha: ${{ steps.last-sha.outputs.sha }}
 
   initialize:
     name: Initialize cache
