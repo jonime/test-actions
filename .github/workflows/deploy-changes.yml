@@ -57,21 +57,12 @@ jobs:
             back:
               - 'packages/back/**'
 
-  debug:
-    name: Debug
-    runs-on: ubuntu-latest
-    steps:
-      - name: Debug
-        run: |
-          echo "Value: ${{ inputs.forceFrontendBuild }}"
-          echo "Expression: ${{ inputs.forceFrontendBuild == 'true' }}"
-
   front-build:
     name: Build frontend
     needs: [check-for-changes, back-deploy]
     if: |
       always() &&
-      (needs.check-for-changes.outputs.frontChanged == 'true' || inputs.forceFrontendBuild == 'true') &&
+      (needs.check-for-changes.outputs.frontChanged == 'true' || inputs.forceFrontendBuild) &&
       (needs.back-deploy.result == 'success' || needs.back-deploy.result == 'skipped')
     uses: ./.github/workflows/front-build.yml
     secrets: inherit
