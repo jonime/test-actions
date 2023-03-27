@@ -58,6 +58,15 @@ jobs:
             back:
               - 'packages/back/**'
 
+  debug:
+    name: Debug
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug
+        run: |
+          echo "Value: ${{ inputs.forceFrontendBuild }}"
+          echo "Expression: ${{ inputs.forceFrontendBuild == 'true' }}"
+
   front-build:
     name: Build frontend
     needs: [check-for-changes, back-deploy]
