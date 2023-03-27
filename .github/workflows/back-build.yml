@@ -21,12 +21,7 @@ jobs:
       - id: image
         name: Image
         run: |
-          cat > $GITHUB_STEP_SUMMARY << EOF
-          \`\`\`
-          ${{ toJSON(github) }}
-          \`\`\`
-          EOF
-          echo "image=${{ github.ref }}" >> $GITHUB_OUTPUT
+          echo "image=${{ github.ref_name }}" >> $GITHUB_OUTPUT
 
       - name: Build
         run: |
