@@ -56,13 +56,18 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            const { env } = process.env;
+            console.log('env is', env);
+
             const response = await github.rest.actions.listWorkflowRuns({
               owner: 'jonime',
               repo: 'test-actions',
               workflow_id: 'update-staging.yml',
               status: 'in_progress',
             });
-            console.log(response);
+            if (response.data.total_count > 0) {
+              core.setFailed('Deployment running');
+            }
 
   front-build:
     name: Build frontend (prod/staging)
