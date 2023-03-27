@@ -54,17 +54,6 @@ jobs:
             back:
               - 'packages/back/**'
 
-      - name: Check for changes (test)
-        id: changes-other
-        uses: dorny/paths-filter@v2
-        with:
-          base: heads/${{ env.branch }}
-          filters: |
-            front:
-              - 'packages/front/**'
-            back:
-              - 'packages/back/**'
-
   initialize:
     name: Initialize cache
     uses: ./.github/workflows/initialize.yml
