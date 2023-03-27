@@ -46,7 +46,7 @@ jobs:
       env: ${{ github.event.client_payload.env || 'test' }}
 
   front-build:
-    name: Build frontend
+    name: Build frontend (prod/staging)
     needs: [validate-env]
     uses: ./.github/workflows/front-build.yml
     if: success() && needs.validate-env.outputs.deployAll == 'false'
@@ -56,7 +56,7 @@ jobs:
       targetEnv: ${{ github.event.client_payload.env || 'test' }}
 
   front-deploy:
-    name: Deploy frontend
+    name: Deploy frontend (prod/staging)
     needs: [validate-env, front-build]
     uses: ./.github/workflows/front-deploy.yml
     if: success() && needs.validate-env.outputs.deployAll == 'false'
