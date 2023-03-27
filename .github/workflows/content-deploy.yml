@@ -45,11 +45,29 @@ jobs:
     with:
       env: ${{ github.event.client_payload.env || 'test' }}
 
+  check-deploys:
+    name: Check for running deploys
+    needs: [validate-env]
+    if: success() && needs.validate-env.outputs.deployAll == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check target environment
+        id: check-env
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const response = await github.rest.git.listWorkflowRuns({
+              owner: 'jonime',
+              repo: 'test-actions',
+              workflow_id: 'update-staging.yml',
+              status: 'in_progress',
+            });
+            console.log(response);
+
   front-build:
     name: Build frontend (prod/staging)
-    needs: [validate-env]
+    needs: [check-deploys]
     uses: ./.github/workflows/front-build.yml
-    if: success() && needs.validate-env.outputs.deployAll == 'false'
     secrets: inherit
     with:
       ref: environment-${{ github.event.client_payload.env || 'test' }}
@@ -57,9 +75,8 @@ jobs:
 
   front-deploy:
     name: Deploy frontend (prod/staging)
-    needs: [validate-env, front-build]
+    needs: [check-deploys, front-build]
     uses: ./.github/workflows/front-deploy.yml
-    if: success() && needs.validate-env.outputs.deployAll == 'false'
     secrets: inherit
     with:
       targetEnv: ${{ github.event.client_payload.env || 'test' }}
