@@ -13,10 +13,3 @@ jobs:
     secrets: inherit
     with:
       env: staging
-
-  make-it-slow:
-    name: Make it slow
-    runs-on: ubuntu-latest
-    steps:
-      - name: Sleep
-        run: sleep 60
