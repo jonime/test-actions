@@ -28,6 +28,13 @@ jobs:
     with:
       targetEnv: prod
 
+  make-it-slow:
+    name: Make it slow
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sleep
+        run: sleep 60
+
   update-env-pointer:
     name: Update env pointer
     needs: [front-deploy]
