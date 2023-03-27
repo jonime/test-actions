@@ -44,6 +44,7 @@ jobs:
     secrets: inherit
     with:
       env: ${{ github.event.client_payload.env || 'test' }}
+      forceFrontendBuild: true
 
   check-deploys:
     name: Check for running deploys
@@ -57,14 +58,19 @@ jobs:
         with:
           script: |
             const { env } = process.env;
-            console.log('env is', env);
+
+            const workflow_id = {
+              'prod': 'trigger-prod-build.yml',
+              'staging': 'update-staging.yml',
+            }[env];
 
             const response = await github.rest.actions.listWorkflowRuns({
               owner: 'jonime',
               repo: 'test-actions',
-              workflow_id: 'update-staging.yml',
+              workflow_id,
               status: 'in_progress',
             });
+
             if (response.data.total_count > 0) {
               core.setFailed('Deployment running');
             }

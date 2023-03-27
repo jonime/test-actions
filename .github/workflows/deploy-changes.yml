@@ -7,6 +7,10 @@ on:
       env:
         required: true
         type: string
+      forceFrontendBuild:
+        type: boolean
+        required: false
+        default: false
 
 concurrency:
   group: deploy-${{ inputs.env }}
@@ -54,15 +58,13 @@ jobs:
             back:
               - 'packages/back/**'
 
-  initialize:
-    name: Initialize cache
-    uses: ./.github/workflows/initialize.yml
-    secrets: inherit
-
   front-build:
     name: Build frontend
-    needs: [initialize, check-for-changes, back-deploy]
-    if: always() && needs.check-for-changes.outputs.frontChanged == 'true' && (needs.back-deploy.result == 'success' || needs.back-deploy.result == 'skipped')
+    needs: [check-for-changes, back-deploy]
+    if: |
+      always() &&
+      (needs.check-for-changes.outputs.frontChanged == 'true' || inputs.forceFrontendBuild == 'true') &&
+      (needs.back-deploy.result == 'success' || needs.back-deploy.result == 'skipped')
     uses: ./.github/workflows/front-build.yml
     secrets: inherit
     with:
@@ -79,7 +81,7 @@ jobs:
 
   back-build:
     name: Build backend
-    needs: [initialize, check-for-changes]
+    needs: [check-for-changes]
     if: always() && needs.check-for-changes.outputs.backChanged == 'true'
     uses: ./.github/workflows/back-build.yml
     secrets: inherit
