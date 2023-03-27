@@ -56,7 +56,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const response = await github.rest.git.listWorkflowRuns({
+            const response = await github.rest.actions.listWorkflowRuns({
               owner: 'jonime',
               repo: 'test-actions',
               workflow_id: 'update-staging.yml',
