@@ -17,4 +17,4 @@ jobs:
     steps:
       - name: Build
         run: |
-          echo "Build ${{ inputs.targetEnv}}!"
+          echo "Build ${{ inputs.targetEnv}}!" >> $GITHUB_STEP_SUMMARY

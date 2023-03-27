@@ -25,13 +25,4 @@ jobs:
 
       - name: Build
         run: |
-          echo "Build ${{ steps.image.outputs.image }} with ${{ inputs.targetEnv }}"
-
-      - name: Add summary
-        uses: actions/github-script@v6
-        with:
-          script: |
-            await core.summary
-              .addHeading('Image')
-              .addCodeBlock('${{ steps.image.outputs.image }}')
-              .write();
+          echo "Build ${{ steps.image.outputs.image }} to ${{ inputs.targetEnv }}" >> $GITHUB_STEP_SUMMARY
