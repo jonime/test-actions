@@ -1,0 +1,214 @@
+name: Frontend - Build
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        required: false
+        type: string
+      targetEnv:
+        required: true
+        type: string
+      accessKeyIdSecretKey:
+        required: true
+        type: string
+      secretAccessKeySecretKey:
+        required: true
+        type: string
+
+jobs:
+  build:
+    name: Build frontend
+    env:
+      AWS_ACCOUNT_CONTEXT: ${{ contains(fromJson('["staging", "prod"]'), inputs.targetEnv) && 'prod' || 'test' }}
+      ARTIFACT_FILENAME: front-build.tar.gz
+    runs-on:
+      labels: ubuntu-latest-4-cores
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-access-key-id: ${{ secrets[inputs.accessKeyIdSecretKey] }}
+          aws-secret-access-key: ${{ secrets[inputs.secretAccessKeySecretKey] }}
+          aws-region: eu-west-1
+          mask-aws-account-id: false
+
+      - id: environment
+        name: Setup static build environment variables
+        shell: bash
+        run: |
+          # Build-time secrets, used during Next.js build on CI.
+          echo "CONTENTFUL_HOST=preview.contentful.com" >> $GITHUB_ENV
+          echo "CONTENTFUL_DELIVERY_ACCESS_KEY=${{ secrets.CONTENTFUL_DELIVERY_ACCESS_KEY_PREVIEW }}" >> $GITHUB_ENV
+          echo "CONTENTFUL_HOST_SHARED_CONTENT=preview.contentful.com" >> $GITHUB_ENV
+          echo "CONTENTFUL_DELIVERY_ACCESS_KEY_SHARED_CONTENT=${{ secrets.CONTENTFUL_DELIVERY_ACCESS_KEY_SHARED_CONTENT_PREVIEW }}" >> $GITHUB_ENV
+          echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}" >> $GITHUB_ENV
+          # Possible values for BUILD_TASK "deploy", "deploy:content"
+          echo "BUILD_TASK=${{ github.event.deployment.task }}" >> $GITHUB_ENV
+          # Run-time secrets.
+          # These are semi-public: they're visible on frontend HTML as parameters to some external scripts.
+          echo "NEXT_PUBLIC_GTM_AUTH=VoVbvO16wCSC622ATOs5ZA" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_GTM_ID=GTM-PS5BDXS" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_GTM_PREVIEW=env-7" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_MAPBOX_TOKEN=pk.eyJ1IjoidnJtYXBib3giLCJhIjoiY2wxbmI0am91MHMzNzNwbzM5YmFyZXV0MCJ9.B24kSzDVBAd1FrVAfegX_g" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_RECAPTCHA_V3_SITE_KEY=6LdnFckhAAAAAKFFfHsdLqCFNgaiv4LqqIvynJL1" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_SENTRY_DSN=https://78d56169f5a844298fc445866847d9ed@sentry.io/1352888" >> $GITHUB_ENV
+          # Generic configuration.
+          echo "NEXT_PUBLIC_ENVIRONMENT=DEV" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_CI_BUILD_NUMBER=buildnumber" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_SHOW_VERSION_NUMBER=FALSE" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_SITE_BASE_URL=https://dev-vrfi.vr.fi/" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_WAGON_MAP_SVG_BASE_URL=https://dev.wagonmap.devvrfi.vrpublic.fi/images/latest/" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_SENTRY_RELEASE=$(echo '${{ github.ref }}' | sed -E 's/refs\/(tags|heads)\///')" >> $GITHUB_ENV
+          echo "SENTRY_ORG=vr-fi" >> $GITHUB_ENV
+          echo "SENTRY_PROJECT=vrfi" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_ENABLE_LAMBDA_AUTH=FALSE" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FF_SHOW_PLANNED_TRAVEL_DIRECTION=TRUE" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FF_ENABLE_CORONA_TEST_INFO=FALSE" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FF_ENABLE_CORPORATE_PRODUCTS=FALSE" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FF_ENABLE_AD_LOGIN=FALSE" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FF_SHOW_VEHICLES=TRUE" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_RECEIPT_VIEW_URL=https://test.lippu-test.vr.fi/kuitti" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_CONTENTFUL_SPACE_ID=${{ secrets.CONTENTFUL_SPACE_ID }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_CONTENTFUL_SPACE_ID_SHARED_CONTENT=${{ secrets.CONTENTFUL_SPACE_ID_SHARED_CONTENT }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FORTE_CLIENT_ID=${{ secrets.FORTE_TEST_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_AD_LOGIN_PATH=https://vrgroup-test.apigee.net/v1/authinternal/authorize" >> $GITHUB_ENV
+
+      - id: dynamic-environment
+        name: Setup dynamic build environment variables from SSM Parameters
+        shell: bash
+        env:
+          SSM_PARAM_NAME_LOGIN_WALL_ENABLED: '/vrfi/${{ inputs.targetEnv }}/frontend/lambda-login/enabled'
+          SSM_PARAM_NAME_LOGIN_WALL_SECRET: '/vrfi/${{ inputs.targetEnv }}/frontend/lambda-login/secret-key'
+          SSM_PARAM_NAME_LOGIN_WALL_PAYLOAD: '/vrfi/${{ inputs.targetEnv }}/frontend/lambda-login/payload'
+        run: |
+          LOGIN_WALL_ENABLED=$(aws ssm get-parameter --name ${SSM_PARAM_NAME_LOGIN_WALL_ENABLED} --with-decryption | jq -r .Parameter.Value)
+          if [ "${LOGIN_WALL_ENABLED}" = "1" ]; then
+            echo "NEXT_PUBLIC_ENABLE_LAMBDA_AUTH=TRUE" >> $GITHUB_ENV
+            echo "LOGIN_WALL_SECRET=$(aws ssm get-parameter --name ${SSM_PARAM_NAME_LOGIN_WALL_SECRET} --with-decryption | jq -r .Parameter.Value)" >> $GITHUB_ENV
+            echo "LOGIN_WALL_PAYLOAD=$(aws ssm get-parameter --name ${SSM_PARAM_NAME_LOGIN_WALL_PAYLOAD} --with-decryption | jq -r .Parameter.Value)" >> $GITHUB_ENV
+          fi
+
+      - name: Build environment overrides for every dev environment
+        if: ${{ !contains(fromJson('["prod", "staging", "fina"]'), inputs.targetEnv) }}
+        shell: bash
+        run: |
+          echo "NEXT_PUBLIC_SHOW_VERSION_NUMBER=TRUE" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_WAGON_MAP_SVG_BASE_URL=https://dev.wagonmap.devvrfi.vrpublic.fi/images/latest/" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_RECEIPT_VIEW_URL=https://test.lippu-test.vr.fi/kuitti" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FF_SHOW_CHANGE_JOURNEY=TRUE" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FF_ENABLE_CORPORATE_PRODUCTS=TRUE" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FF_ENABLE_AD_LOGIN=TRUE" >> $GITHUB_ENV
+
+      - name: Build environment overrides for dev environment
+        if: inputs.targetEnv == 'dev'
+        shell: bash
+        run: |
+          echo "NEXT_PUBLIC_SITE_BASE_URL=https://dev-vrfi.vr.fi/" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_ENVIRONMENT=DEV" >> $GITHUB_ENV
+
+      - name: Build environment overrides for preview environment
+        if: inputs.targetEnv == 'preview'
+        shell: bash
+        run: |
+          echo "NEXT_PUBLIC_SITE_BASE_URL=https://preview-vrfi.vr.fi/" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_ENVIRONMENT=PREVIEW" >> $GITHUB_ENV
+
+      - name: Build environment overrides for test environment
+        if: inputs.targetEnv == 'test'
+        shell: bash
+        run: |
+          echo "NEXT_PUBLIC_SITE_BASE_URL=https://test-vrfi.vr.fi/" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_ENVIRONMENT=TEST" >> $GITHUB_ENV
+
+      - name: Build environment overrides for fina environment
+        if: inputs.targetEnv == 'fina'
+        shell: bash
+        run: |
+          echo "NEXT_PUBLIC_SITE_BASE_URL=https://fina-vrfi.vr.fi/" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_ENVIRONMENT=FINA" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_SHOW_VERSION_NUMBER=TRUE" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_WAGON_MAP_SVG_BASE_URL=https://test.wagonmap.devvrfi.vrpublic.fi/images/latest/" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_RECEIPT_VIEW_URL=https://fina.lippu-test.vr.fi/kuitti" >> $GITHUB_ENV
+
+      - id: environment-override-staging
+        name: Build environment overrides for staging environment
+        if: inputs.targetEnv == 'staging'
+        shell: bash
+        run: |
+          echo "NEXT_PUBLIC_SITE_BASE_URL=https://staging.vr.fi/" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_ENVIRONMENT=STAGING" >> $GITHUB_ENV
+          echo "CONTENTFUL_HOST=cdn.contentful.com" >> $GITHUB_ENV
+          echo "CONTENTFUL_DELIVERY_ACCESS_KEY=${{ secrets.CONTENTFUL_DELIVERY_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "CONTENTFUL_HOST_SHARED_CONTENT=cdn.contentful.com" >> $GITHUB_ENV
+          echo "CONTENTFUL_DELIVERY_ACCESS_KEY_SHARED_CONTENT=${{ secrets.CONTENTFUL_DELIVERY_ACCESS_KEY_SHARED_CONTENT }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_WAGON_MAP_SVG_BASE_URL=https://prod.wagonmap.prodvrfi.vrpublic.fi/images/v1.6.0/" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_RECAPTCHA_V3_SITE_KEY=6Lf_gdMhAAAAAFAjEPhmx_ACw4mxYT_884tdYW0r" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_GTM_AUTH=" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_GTM_ID=GTM-PS5BDXS" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_GTM_PREVIEW=" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_RECEIPT_VIEW_URL=https://www.lippu.vr.fi/kuitti" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FF_ENABLE_CORPORATE_PRODUCTS=TRUE" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FORTE_CLIENT_ID=${{ secrets.FORTE_PROD_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_AD_LOGIN_PATH=https://vrgroup-prod.apigee.net/v1/authinternal/authorize" >> $GITHUB_ENV
+
+      - id: environment-override-prod
+        name: Build environment overrides for prod environment
+        if: inputs.targetEnv == 'prod'
+        shell: bash
+        run: |
+          echo "NEXT_PUBLIC_SITE_BASE_URL=https://www.vr.fi/" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_ENVIRONMENT=PRODUCTION" >> $GITHUB_ENV
+          echo "CONTENTFUL_HOST=cdn.contentful.com" >> $GITHUB_ENV
+          echo "CONTENTFUL_DELIVERY_ACCESS_KEY=${{ secrets.CONTENTFUL_DELIVERY_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "CONTENTFUL_HOST_SHARED_CONTENT=cdn.contentful.com" >> $GITHUB_ENV
+          echo "CONTENTFUL_DELIVERY_ACCESS_KEY_SHARED_CONTENT=${{ secrets.CONTENTFUL_DELIVERY_ACCESS_KEY_SHARED_CONTENT }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_WAGON_MAP_SVG_BASE_URL=https://prod.wagonmap.prodvrfi.vrpublic.fi/images/v1.6.0/" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_RECAPTCHA_V3_SITE_KEY=6Lf_gdMhAAAAAFAjEPhmx_ACw4mxYT_884tdYW0r" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_GTM_AUTH=" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_GTM_ID=GTM-PS5BDXS" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_GTM_PREVIEW=" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_ENABLE_LAMBDA_AUTH=FALSE" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_RECEIPT_VIEW_URL=https://www.lippu.vr.fi/kuitti" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FF_ENABLE_CORPORATE_PRODUCTS=TRUE" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FORTE_CLIENT_ID=${{ secrets.FORTE_PROD_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_AD_LOGIN_PATH=https://vrgroup-prod.apigee.net/v1/authinternal/authorize" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: ./.github/actions/initialize
+        name: Initialize
+        with:
+          artifactoryEmail: ${{ secrets.ARTIFACTORY_EMAIL }}
+          artifactoryUsername: ${{ secrets.ARTIFACTORY_USERNAME }}
+          artifactoryPassword: ${{ secrets.ARTIFACTORY_PASSWORD }}
+
+      - name: Cache next.js build cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ github.workspace }}/packages/front/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('packages/front/**.[jt]s', 'packages/front/**.[jt]sx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+
+      - name: Run Next.js build
+        run: npm run build --workspace=front
+
+      - name: Package build artifacts
+        if: success()
+        id: package-build-artifacts-next
+        shell: bash
+        run: |
+          echo "::group::Package build artifacts with tar"
+          tar -czvf ${{ env.ARTIFACT_FILENAME }} ./packages/front/out
+          echo "::endgroup::"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: front-build
+          path: ${{ env.ARTIFACT_FILENAME }}
+          retention-days: 1 # Only needs to be available for the deploy job. We're not storing these for the long term.

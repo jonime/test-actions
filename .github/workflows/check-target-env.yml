@@ -1,0 +1,31 @@
+name: Check target environment
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        required: true
+        type: string
+    outputs:
+      env:
+        value: ${{ jobs.check-target-env.outputs.env }}
+
+jobs:
+  check-target-env:
+    name: Check target environment
+    runs-on: ubuntu-latest
+    outputs:
+      env: ${{ steps.check-env.outputs.env }}
+    steps:
+      - name: Check target environment
+        id: check-env
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const environments = {
+              master: 'test',
+              preview: 'preview',
+              dev: 'dev',
+            };
+            const env = environments['${{ inputs.branch }}'] || 'test';
+            core.setOutput('env', env);

@@ -1,0 +1,26 @@
+name: Update environment
+
+on:
+  push:
+    branches:
+      - master
+      - preview
+      - dev
+
+jobs:
+  check-target-env:
+    name: Check target environment
+    uses: ./.github/workflows/check-target-env.yml
+    secrets: inherit
+    with:
+      branch: ${{ github.ref_name }}
+
+  deploy-changes:
+    needs: [check-target-env]
+    name: Deploy changes
+    uses: ./.github/workflows/deploy-changes.yml
+    secrets: inherit
+    with:
+      env: ${{ needs.check-target-env.outputs.env }}
+      accessKeyIdSecretKey: VRFI_TEST_AWS_ACCESS_KEY_ID
+      secretAccessKeySecretKey: VRFI_TEST_AWS_SECRET_ACCESS_KEY

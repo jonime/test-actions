@@ -1,0 +1,131 @@
+name: Deploy changes
+run-name: Deploying changes to ${{ inputs.env }}
+
+on:
+  workflow_call:
+    inputs:
+      env:
+        required: true
+        type: string
+      accessKeyIdSecretKey:
+        required: false
+        type: string
+        default: 'VRFI_TEST_AWS_ACCESS_KEY_ID'
+      secretAccessKeySecretKey:
+        required: false
+        type: string
+        default: 'VRFI_TEST_AWS_SECRET_ACCESS_KEY'
+
+concurrency:
+  group: deploy-${{ inputs.env }}
+
+jobs:
+  check-for-changes:
+    name: Check for changes
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    outputs:
+      frontChanged: ${{ steps.changes.outcome != 'success' || contains(steps.changes.outputs.all_changed_files, 'packages/front') }}
+      backChanged: ${{ steps.changes.outcome != 'success' || contains(steps.changes.outputs.all_changed_files, 'packages/back') }}
+    env:
+      branch: environment-${{ inputs.env }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Find SHA for ${{ env.branch }}
+        uses: actions/github-script@v6
+        id: last-sha
+        with:
+          script: |
+            try {
+              const response = await github.rest.git.getRef({
+                owner: 'FinnishRail',
+                repo: 'vr-web',
+                ref: 'heads/${{ env.branch }}',
+              });
+              const sha = response.data.object.sha;
+              core.info('Found SHA for branch ${{ env.branch }}: ' + sha);
+              core.setOutput('sha', sha);
+            } catch (e) {
+              core.setFailed('Could not find a SHA for ${{ env.branch }}');
+            }
+
+      - name: Check for changes
+        if: success()
+        id: changes
+        uses: tj-actions/changed-files@v35
+        with:
+          files: packages/*
+          dir_names: true
+          dir_names_max_depth: 2
+          base_sha: ${{ steps.last-sha.outputs.sha }}
+
+  initialize:
+    name: Initialize cache
+    uses: ./.github/workflows/initialize.yml
+    secrets: inherit
+
+  front-build:
+    name: Build frontend
+    needs: [initialize, check-for-changes, back-deploy]
+    if: always() && needs.check-for-changes.outputs.frontChanged == 'true' && (needs.back-deploy.result == 'success' || needs.back-deploy.result == 'skipped')
+    uses: ./.github/workflows/front-build.yml
+    secrets: inherit
+    with:
+      targetEnv: ${{ inputs.env }}
+      accessKeyIdSecretKey: ${{ inputs.accessKeyIdSecretKey }}
+      secretAccessKeySecretKey: ${{ inputs.secretAccessKeySecretKey }}
+
+  front-deploy:
+    name: Deploy frontend
+    needs: [front-build]
+    if: always() && needs.front-build.result == 'success'
+    uses: ./.github/workflows/front-deploy.yml
+    secrets: inherit
+    with:
+      targetEnv: ${{ inputs.env }}
+      accessKeyIdSecretKey: ${{ inputs.accessKeyIdSecretKey }}
+      secretAccessKeySecretKey: ${{ inputs.secretAccessKeySecretKey }}
+
+  back-build:
+    name: Build backend
+    needs: [initialize, check-for-changes]
+    if: always() && needs.check-for-changes.outputs.backChanged == 'true'
+    uses: ./.github/workflows/back-build.yml
+    secrets: inherit
+    with:
+      targetEnv: ${{ inputs.env }}
+      accessKeyIdSecretKey: ${{ inputs.accessKeyIdSecretKey }}
+      secretAccessKeySecretKey: ${{ inputs.secretAccessKeySecretKey }}
+
+  back-deploy:
+    name: Deploy backend
+    needs: [back-build]
+    if: always() && needs.back-build.result == 'success'
+    uses: ./.github/workflows/back-deploy.yml
+    secrets: inherit
+    with:
+      image: ${{ needs.back-build.outputs.image }}
+      targetEnv: ${{ inputs.env }}
+      accessKeyIdSecretKey: ${{ inputs.accessKeyIdSecretKey }}
+      secretAccessKeySecretKey: ${{ inputs.secretAccessKeySecretKey }}
+
+  update-env-pointer:
+    name: Update env pointer
+    needs: [front-deploy, back-deploy]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: |
+      always() &&
+      contains(needs.*.result, 'success') &&
+      !contains(needs.*.result, 'cancelled') &&
+      !contains(needs.*.result, 'failure')
+    env:
+      branch: environment-${{ inputs.env }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update env pointer
+        run: |
+          git checkout -b ${{ env.branch }}
+          git push -f origin ${{ env.branch }}

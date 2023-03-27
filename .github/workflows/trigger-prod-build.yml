@@ -1,0 +1,48 @@
+name: Trigger production build (frontend)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Git tag to deploy, example: 'v1.0.0'"
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-prod
+
+jobs:
+  front-build:
+    name: Build frontend - prod
+    uses: ./.github/workflows/front-build.yml
+    secrets: inherit
+    with:
+      ref: refs/tags/${{ inputs.tag }}
+      targetEnv: prod
+      accessKeyIdSecretKey: VRFI_PROD_AWS_ACCESS_KEY_ID
+      secretAccessKeySecretKey: VRFI_PROD_AWS_SECRET_ACCESS_KEY
+
+  front-deploy:
+    name: Deploy frontend - prod
+    needs: [front-build]
+    uses: ./.github/workflows/front-deploy.yml
+    secrets: inherit
+    with:
+      targetEnv: prod
+      accessKeyIdSecretKey: VRFI_PROD_AWS_ACCESS_KEY_ID
+      secretAccessKeySecretKey: VRFI_PROD_AWS_SECRET_ACCESS_KEY
+
+  update-env-pointer:
+    name: Update env pointer
+    needs: [front-deploy]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      branch: environment-prod
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update env pointer
+        run: |
+          git checkout -b ${{ env.branch }}
+          git push -f origin ${{ env.branch }}

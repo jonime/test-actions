@@ -1,0 +1,77 @@
+name: Content deploy
+run-name: |
+  Content deploy: ${{ github.event.client_payload.env || 'test' }}
+
+on:
+  repository_dispatch:
+    types: [content-build]
+
+concurrency:
+  group: deploy-${{ github.event.client_payload.env || 'test' }}
+
+env:
+  env: ${{ github.event.client_payload.env || 'test' }}
+
+jobs:
+  validate-env:
+    name: Validate target environment
+    runs-on: ubuntu-latest
+    outputs:
+      deployAll: ${{ steps.validate.outputs.deployAll }}
+      accessKeyIdSecretKey: ${{ steps.validate.outputs.accessKeyIdSecretKey }}
+      secretAccessKeySecretKey: ${{ steps.validate.outputs.secretAccessKeySecretKey }}
+    steps:
+      - name: Validate "${{ env.env }}"
+        id: validate
+        uses: actions/github-script@v6
+        with:
+          script: |
+            if (['prod', 'staging'].includes('${{ env.env }}')) {
+              core.setOutput('deployAll', 'false');
+              core.setOutput('accessKeyIdSecretKey', 'VRFI_PROD_AWS_ACCESS_KEY_ID');
+              core.setOutput('secretAccessKeySecretKey', 'VRFI_PROD_AWS_SECRET_ACCESS_KEY');
+              return;
+            }
+
+            if (['test', 'dev', 'preview'].includes('${{ env.env }}')) {
+              core.setOutput('deployAll', 'true');
+              core.setOutput('accessKeyIdSecretKey', 'VRFI_TEST_AWS_ACCESS_KEY_ID');
+              core.setOutput('secretAccessKeySecretKey', 'VRFI_TEST_AWS_SECRET_ACCESS_KEY');
+              return;
+            }
+
+            core.setFailed('Invalid env: ${{ env.env }}');
+
+  deploy-changes:
+    needs: [validate-env]
+    name: Deploy changes
+    uses: ./.github/workflows/deploy-changes.yml
+    if: success() && needs.validate-env.outputs.deployAll == 'true'
+    secrets: inherit
+    with:
+      env: ${{ github.event.client_payload.env || 'test' }}
+      accessKeyIdSecretKey: ${{ needs.validate-env.outputs.accessKeyIdSecretKey }}
+      secretAccessKeySecretKey: ${{ needs.validate-env.outputs.accessKeyIdSecretKey }}
+
+  front-build:
+    name: Build frontend
+    needs: [validate-env]
+    uses: ./.github/workflows/front-build.yml
+    if: success() && needs.validate-env.outputs.deployAll == 'false'
+    secrets: inherit
+    with:
+      ref: environment-${{ github.event.client_payload.env || 'test' }}
+      targetEnv: ${{ github.event.client_payload.env || 'test' }}
+      accessKeyIdSecretKey: ${{ needs.validate-env.outputs.accessKeyIdSecretKey }}
+      secretAccessKeySecretKey: ${{ needs.validate-env.outputs.secretAccessKeySecretKey }}
+
+  front-deploy:
+    name: Deploy frontend
+    needs: [validate-env, front-build]
+    uses: ./.github/workflows/front-deploy.yml
+    if: success() && needs.validate-env.outputs.deployAll == 'false'
+    secrets: inherit
+    with:
+      targetEnv: ${{ github.event.client_payload.env || 'test' }}
+      accessKeyIdSecretKey: ${{ needs.validate-env.outputs.accessKeyIdSecretKey }}
+      secretAccessKeySecretKey: ${{ needs.validate-env.outputs.secretAccessKeySecretKey }}

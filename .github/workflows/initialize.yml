@@ -1,0 +1,26 @@
+name: Initialize
+
+on:
+  workflow_call:
+    secrets:
+      ARTIFACTORY_EMAIL:
+        required: true
+      ARTIFACTORY_USERNAME:
+        required: true
+      ARTIFACTORY_PASSWORD:
+        required: true
+
+jobs:
+  initialize:
+    name: Initialize
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - id: initialize
+        name: Initialize
+        uses: ./.github/actions/initialize
+        with:
+          artifactoryEmail: ${{ secrets.ARTIFACTORY_EMAIL }}
+          artifactoryUsername: ${{ secrets.ARTIFACTORY_USERNAME }}
+          artifactoryPassword: ${{ secrets.ARTIFACTORY_PASSWORD }}
