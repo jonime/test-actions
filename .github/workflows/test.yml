@@ -1,0 +1,16 @@
+name: Test
+
+on:
+  workflow_call:
+    inputs:
+      test:
+        required: true
+        type: string
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test
+        run: echo "Test on ${{ inputs.test }}"
