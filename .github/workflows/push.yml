@@ -6,8 +6,10 @@ on:
 jobs:
   variables:
     name: Variables
+    runs-on: ubuntu-latest
     outputs:
       test: ${{ github.ref_name }}
+    steps:
 
   test:
     name: test
