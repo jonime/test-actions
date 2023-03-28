@@ -10,6 +10,8 @@ jobs:
     outputs:
       test: ${{ github.ref_name }}
     steps:
+      - name: Nothing
+        run:
 
   test:
     name: test
