@@ -11,7 +11,7 @@ jobs:
       test: ${{ github.ref_name }}
     steps:
       - name: Nothing
-        run:
+        run: echo "OK"
 
   test:
     name: test
