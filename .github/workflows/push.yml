@@ -3,13 +3,16 @@ name: Push
 on:
   push:
 
-env:
-  test: ${{ github.ref_name }}
-
 jobs:
+  variables:
+    name: Variables
+    outputs:
+      test: ${{ github.ref_name }}
+
   test:
     name: test
+    needs: [variables]
     uses: ./.github/workflows/test.yml
     secrets: inherit
     with:
-      test: ${{ env.test }}
+      test: ${{ needs.variables.outputs.test }}
