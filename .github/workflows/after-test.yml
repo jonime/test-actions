@@ -2,7 +2,7 @@ name: After test
 
 on:
   workflow_run:
-    workflows: [Test]
+    workflows: [Push]
 
 jobs:
   after-test:
