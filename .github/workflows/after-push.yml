@@ -1,0 +1,16 @@
+name: After push
+
+on:
+  workflow_run:
+    workflows:
+      - Push
+    types:
+      - completed
+
+jobs:
+  after-push:
+    name: After push
+    runs-on: ubuntu-latest
+    steps:
+      - name: After push
+        run: echo "After ${{ github.ref }}"
