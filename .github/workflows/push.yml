@@ -4,19 +4,7 @@ on:
   push:
 
 jobs:
-  variables:
-    name: Variables
-    runs-on: ubuntu-latest
-    outputs:
-      test: ${{ github.ref_name }}
-    steps:
-      - name: Nothing
-        run: echo "OK"
-
   test:
     name: test
-    needs: [variables]
     uses: ./.github/workflows/test.yml
     secrets: inherit
-    with:
-      test: ${{ needs.variables.outputs.test }}

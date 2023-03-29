@@ -1,0 +1,13 @@
+name: After test
+
+on:
+  workflow_run:
+    workflows: [Test]
+
+jobs:
+  after-test:
+    name: After test
+    runs-on: ubuntu-latest
+    steps:
+      - name: After test
+        run: echo "OK!"
