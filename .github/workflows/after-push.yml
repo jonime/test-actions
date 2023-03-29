@@ -13,4 +13,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: After push
-        run: echo "After ${{ github.ref }}"
+        run: echo "After ${{ github.event.workflow_run.head_sha }}"
