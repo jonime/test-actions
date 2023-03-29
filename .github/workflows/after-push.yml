@@ -12,5 +12,6 @@ jobs:
     name: After push
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - name: After push
         run: echo "After ${{ github.event.workflow_run.head_sha }}"
